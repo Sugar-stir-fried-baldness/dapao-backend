@@ -1,8 +1,10 @@
 package com.yupi.usercenter.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -20,13 +22,17 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  */
 @Configuration // 配置类
 @EnableSwagger2 // 开启 swagger2 的自动配置
+@EnableWebMvc
 @Profile({"dev", "test"})
+@Slf4j
 public class SwaggerConfig {
     @Bean
     public Docket docket() {
+        log.info("进入docket函数 的swagger");
         // 创建一个 swagger 的 bean 实例
         return new Docket(DocumentationType.SWAGGER_2)
-
+                // 配置基本信息
+                .apiInfo(apiInfo())
                 // 配置接口信息
                 .select() // 设置扫描接口
                 // 配置如何扫描接口
@@ -49,6 +55,7 @@ public class SwaggerConfig {
 
     // 基本信息设置
     private ApiInfo apiInfo() {
+        log.info("进入Slf4j 的基本信息设置");
         Contact contact = new Contact(
                 "shayu", // 作者姓名
                 "shayuyu.cn", // 作者网址
