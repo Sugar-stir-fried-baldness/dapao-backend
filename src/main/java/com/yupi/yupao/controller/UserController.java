@@ -29,6 +29,7 @@ import static com.yupi.yupao.contant.UserConstant.USER_LOGIN_STATE;
  */
 @RestController
 @RequestMapping("/user")
+@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
 
     @Resource
@@ -132,7 +133,7 @@ public class UserController {
     @GetMapping("/search/tags")
     public BaseResponse<List<User> > searchUserByTags(@RequestParam(required = false) List<String> tagNameList) {
         if(CollectionUtils.isEmpty(tagNameList)){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR , "请求参数wield空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR , "请求参数为空");
         }
         List<User> userList = userService.searchUserByTags(tagNameList);
         return ResultUtils.success(userList);
