@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.yupi.yupao.common.ErrorCode;
+import com.yupi.yupao.contant.UserConstant;
 import com.yupi.yupao.exception.BusinessException;
 import com.yupi.yupao.mapper.UserMapper;
 import com.yupi.yupao.model.domain.User;
@@ -22,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.yupi.yupao.contant.UserConstant.ADMIN_ROLE;
 import static com.yupi.yupao.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -43,7 +45,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     /**
      * 盐值，混淆密码
      */
-    private static final String SALT = "yupi";
+    private static final String SALT = "zzh";
 
     /**
      * 用户注册
@@ -145,7 +147,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 用户不存在
         if (user == null) {
             log.info("user login failed, userAccount cannot match userPassword");
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号或密码错误");
         }
         // 3. 用户脱敏
         User safetyUser = getSafetyUser(user);
@@ -230,6 +232,84 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
 
     }
+
+
+    /**
+     * 获取当前登录用户
+     * @param request
+     * @return
+     */
+    @Override
+    public User getLoginUser( HttpServletRequest request) {
+        if(request == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Object loginUser = request.getSession().getAttribute(USER_LOGIN_STATE);
+
+        if(loginUser == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        return (User) loginUser;
+
+
+    }
+
+    /**
+     * 更新用户
+     * @param user
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public int updateUser(User user, User loginUser) {
+        //判断这个
+        if(user == null){
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        Long id = user.getId();
+
+        if(!isAdmin(user) && id != loginUser.getId() ){
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+
+        User userResult = userMapper.selectById(id);
+        if(userResult == null){
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+
+        int i = userMapper.updateById(userResult);
+
+        return i;
+    }
+
+    /**
+     * 是否为管理员
+     * @param request
+     * @return
+     */
+    @Override
+    public boolean isAdmin(HttpServletRequest request) {
+        // 仅管理员可查询
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = (User) userObj;
+        return user != null && user.getUserRole() == UserConstant.ADMIN_ROLE;
+    }
+
+    /**
+     * 是否为管理员
+     *
+     * @param user
+     * @return
+     */
+    @Override
+    public boolean isAdmin(User user) {
+        if (user == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        return user != null && user.getUserRole() == UserConstant.ADMIN_ROLE;
+    }
+
 
     /**
      * 根据标签名查询 用户 (SQL查询版本)
