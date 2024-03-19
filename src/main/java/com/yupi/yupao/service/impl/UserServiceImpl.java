@@ -242,7 +242,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public User getLoginUser( HttpServletRequest request) {
         if(request == null){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+            return null;
         }
         Object loginUser = request.getSession().getAttribute(USER_LOGIN_STATE);
 
@@ -267,9 +267,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if(user == null){
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        Long id = user.getId();
 
-        if(!isAdmin(user) && id != loginUser.getId() ){
+        //todo 补充校验，如果用户没有传任何要更新的值，就直接报错，不执行update语句
+        Long id = user.getId();
+//        log.info("user.id 和 loginUser.id 的id分别是",id,loginUser.getId());
+        if(!isAdmin(loginUser) && id != loginUser.getId() ){
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
 
@@ -278,7 +280,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
 
-        int i = userMapper.updateById(userResult);
+        int i = userMapper.updateById(user);
 
         return i;
     }
@@ -304,9 +306,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public boolean isAdmin(User user) {
-        if (user == null){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+
         return user != null && user.getUserRole() == UserConstant.ADMIN_ROLE;
     }
 

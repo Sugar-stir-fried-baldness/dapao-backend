@@ -22,15 +22,13 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
 
-
-
-
-
 server:
   port: 8080
   servlet:
     context-path: /api
     session:
+# 由于 前后端访问地址不同，为了前端能够接收到后端上传的数据，设置domain为localhost (两个地址的公共前缀)
+# 其实domain 这里也可以什么都不加，but，加了的话，无论前端的端口怎么改变，接受的都是同一个cookie，不用重新分配cookie
       cookie:
         domain: localhost
 mybatis-plus:

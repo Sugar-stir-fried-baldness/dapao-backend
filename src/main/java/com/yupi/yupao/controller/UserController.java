@@ -1,6 +1,8 @@
 package com.yupi.yupao.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.yupao.common.BaseResponse;
 import com.yupi.yupao.common.ErrorCode;
 import com.yupi.yupao.common.ResultUtils;
@@ -29,7 +31,7 @@ import static com.yupi.yupao.contant.UserConstant.USER_LOGIN_STATE;
  */
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:5173" , allowCredentials = "true")
 public class UserController {
 
     @Resource
@@ -139,6 +141,23 @@ public class UserController {
         return ResultUtils.success(userList);
     }
 
+    /**
+     * 首页
+     * @param pageSize
+     * @param pageNum
+     * @param request
+     * @return
+     */
+    @GetMapping("/recommend")
+    public BaseResponse<Page<User>> recommendUsers(long pageSize , long pageNum , HttpServletRequest request) {
+
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        //page 是mybatis里面的分页查询方法，需要传入 翻页对象，封装类   pageNum:页号
+        Page<User> userList = userService.page( new Page<>( pageNum , pageSize)  , queryWrapper);
+        return ResultUtils.success(userList);
+    }
+
+
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteUser(@RequestBody long id, HttpServletRequest request) {
         if (!userService.isAdmin(request)) {
@@ -167,6 +186,7 @@ public class UserController {
         //鉴权
 
         User loginUser = userService.getLoginUser(  request );
+
 
         int result = userService.updateUser(  user , loginUser);
 
