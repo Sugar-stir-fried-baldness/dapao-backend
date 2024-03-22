@@ -11,13 +11,17 @@ import com.yupi.yupao.model.domain.User;
 import com.yupi.yupao.model.domain.request.UserLoginRequest;
 import com.yupi.yupao.model.domain.request.UserRegisterRequest;
 import com.yupi.yupao.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.yupi.yupao.contant.UserConstant.ADMIN_ROLE;
@@ -32,10 +36,14 @@ import static com.yupi.yupao.contant.UserConstant.USER_LOGIN_STATE;
 @RestController
 @RequestMapping("/user")
 @CrossOrigin(origins = "http://localhost:5173" , allowCredentials = "true")
+@Slf4j
 public class UserController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private RedisTemplate<String , Object> redisTemplate;
 
     /**
      * 用户注册
@@ -142,7 +150,7 @@ public class UserController {
     }
 
     /**
-     * 首页
+     * 首页  分页查询
      * @param pageSize
      * @param pageNum
      * @param request
@@ -150,11 +158,28 @@ public class UserController {
      */
     @GetMapping("/recommend")
     public BaseResponse<Page<User>> recommendUsers(long pageSize , long pageNum , HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
 
+        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+        String redisKey = String.format("yupao:user:recommend:%s", loginUser.getId());
+
+        //如果有缓存，直接读缓存
+        Page<User>  userPage = (Page<User> )valueOperations.get(redisKey);
+        if(userPage != null){
+            return ResultUtils.success(userPage);
+        }
+
+        //如果没缓存，从数据库中wu查询， 写入缓存里面
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         //page 是mybatis里面的分页查询方法，需要传入 翻页对象，封装类   pageNum:页号
-        Page<User> userList = userService.page( new Page<>( pageNum , pageSize)  , queryWrapper);
-        return ResultUtils.success(userList);
+        userPage = userService.page( new Page<>( pageNum , pageSize)  , queryWrapper);
+        try {
+            valueOperations.set(redisKey , userPage ,30000, TimeUnit.MILLISECONDS );
+        } catch (Exception e) {
+            log.error("redis set error",e);
+        }
+
+        return ResultUtils.success(userPage);
     }
 
 

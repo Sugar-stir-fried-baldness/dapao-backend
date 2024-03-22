@@ -1,10 +1,12 @@
 package com.yupi.yupao.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.yupi.yupao.common.ErrorCode;
+import com.yupi.yupao.common.ResultUtils;
 import com.yupi.yupao.contant.UserConstant;
 import com.yupi.yupao.exception.BusinessException;
 import com.yupi.yupao.mapper.UserMapper;
@@ -12,6 +14,8 @@ import com.yupi.yupao.model.domain.User;
 import com.yupi.yupao.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
@@ -39,6 +43,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private RedisTemplate redisTemplate;
 
     // https://www.code-nav.cn/
 
@@ -309,6 +316,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         return user != null && user.getUserRole() == UserConstant.ADMIN_ROLE;
     }
+
 
 
     /**

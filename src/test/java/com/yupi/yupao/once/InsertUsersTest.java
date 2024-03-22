@@ -66,7 +66,7 @@ class InsertUsersTest {
      */
     @Test
     public void doConcurrencyInsertSearch(){
-          StopWatch stopWatch = new StopWatch();
+        StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         final int INSERT_VALUE = 100000;
         //分十组
@@ -94,9 +94,11 @@ class InsertUsersTest {
                     break;
                 }
             }
+
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 userService.saveBatch(userList, batchSize);
             },executorService);
+
             futureList.add(future);
         }
         CompletableFuture.allOf(futureList.toArray(new CompletableFuture[]{})).join();

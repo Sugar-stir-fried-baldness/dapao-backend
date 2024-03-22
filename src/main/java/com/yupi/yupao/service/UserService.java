@@ -1,7 +1,9 @@
 package com.yupi.yupao.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.yupao.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.data.redis.core.ValueOperations;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -92,4 +94,5 @@ public interface UserService extends IService<User> {
      * @return
      */
      boolean isAdmin(User user);
+
 }
