@@ -9,6 +9,7 @@ import com.yupi.yupao.model.domain.User;
 import com.yupi.yupao.model.domain.UserTeam;
 import com.yupi.yupao.model.dto.TeamQuery;
 import com.yupi.yupao.model.enums.TeamStatusEnum;
+import com.yupi.yupao.model.request.TeamUpdateRequest;
 import com.yupi.yupao.model.vo.TeamUserVO;
 import com.yupi.yupao.model.vo.UserVO;
 import com.yupi.yupao.service.TeamService;
@@ -194,6 +195,39 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         }
 
         return teamUserVOList;
+    }
+
+    @Override
+    public boolean updateTeam(TeamUpdateRequest teamUpdateRequest, User loginUser) {
+        if(teamUpdateRequest == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Long id = teamUpdateRequest.getId();
+        if(id == null || id <= 0){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //原始队伍
+        Team oldTeam = this.getById(id);
+        if(oldTeam == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //如果当前登录用户  不是管理员 且 不是队伍创建者
+        if( oldTeam.getUserId() !=  loginUser.getId() && !userService.isAdmin(loginUser)){
+            throw new BusinessException(ErrorCode.NO_AUTH );
+        }
+
+        //如果队伍状态为加密，必须要有密码
+        TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(teamUpdateRequest.getStatus());
+
+        if(TeamStatusEnum.SECRET.equals(statusEnum) ){
+            if(StringUtils.isBlank( teamUpdateRequest.getPassword() ) ){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR , "密码为空");
+            }
+        }
+        Team team = new Team();
+        BeanUtils.copyProperties(teamUpdateRequest,team);
+        return this.updateById(team);
+
     }
 }
 
