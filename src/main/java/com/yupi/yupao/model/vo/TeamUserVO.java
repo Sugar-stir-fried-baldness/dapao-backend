@@ -1,24 +1,23 @@
-package com.yupi.yupao.model.dto;
+package com.yupi.yupao.model.vo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.yupi.yupao.common.PageRequest;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
+import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Author:tzy
- * @Description : 队伍查询请求类 DTO，前端传来的参数
- * @Date:2024/3/259:11
+ * @Description : 用户队伍封装类（脱敏）  --返回给前端
+ * @Date:2024/3/268:40
  */
-//自动生成的equals和hashCode方法包含父类的属性。
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class TeamQuery extends PageRequest {
+public class TeamUserVO implements Serializable {
+    private static final long serialVersionUID = 8791428956020294645L;
     /**
      * id
      */
@@ -30,10 +29,6 @@ public class TeamQuery extends PageRequest {
     private String name;
 
     /**
-     * 关键词
-     */
-    private String searchText;
-    /**
      * 描述
      */
     private String description;
@@ -42,6 +37,11 @@ public class TeamQuery extends PageRequest {
      * 最大人数
      */
     private Integer maxNum;
+
+    /**
+     * 过期时间
+     */
+    private Date expireTime;
 
     /**
      * 用户id（队长 id）
@@ -53,5 +53,23 @@ public class TeamQuery extends PageRequest {
      */
     private Integer status;
 
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
+
+//    /**
+//     * 已经加入队伍的成员（入队用户列表）
+//     */
+    /**
+     * 创建人用户信息
+     */
+     UserVO createUser;
 
 }

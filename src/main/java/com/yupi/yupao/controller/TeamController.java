@@ -10,6 +10,7 @@ import com.yupi.yupao.model.domain.Team;
 import com.yupi.yupao.model.domain.User;
 import com.yupi.yupao.model.dto.TeamQuery;
 import com.yupi.yupao.model.request.TeamAddRequest;
+import com.yupi.yupao.model.vo.TeamUserVO;
 import com.yupi.yupao.service.TeamService;
 import com.yupi.yupao.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class TeamController {
     private TeamService teamService;
 
 
-    @GetMapping("/add")
+    @PostMapping("/add")
     public BaseResponse<Long> addTeam(@RequestBody TeamAddRequest teamAddRequest , HttpServletRequest request){
         if(teamAddRequest == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR );
@@ -90,22 +91,22 @@ public class TeamController {
         return ResultUtils.success(team);
     }
 
+
     /**
      * 查询所有
      * @param teamQuery
      * @return
      */
     @GetMapping("/list")
-    public BaseResponse<List<Team>> listTeams(TeamQuery teamQuery){
+    public BaseResponse<List<TeamUserVO>> listTeams(TeamQuery teamQuery){
         if(teamQuery == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR );
         }
-        Team team = new Team();
-        BeanUtils.copyProperties(teamQuery , team);
-        QueryWrapper<Team> teamQueryWrapper = new QueryWrapper<>(team);
-        List<Team> teamList = teamService.list(teamQueryWrapper);
+
+        List<TeamUserVO> teamList = teamService.listTeam(teamQuery);
         return ResultUtils.success(teamList);
     }
+
 
     /**
      * 查询所有

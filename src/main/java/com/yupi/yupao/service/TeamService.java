@@ -3,6 +3,12 @@ package com.yupi.yupao.service;
 import com.yupi.yupao.model.domain.Team;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yupi.yupao.model.domain.User;
+import com.yupi.yupao.model.dto.TeamQuery;
+import com.yupi.yupao.model.vo.TeamUserVO;
+
+
+import java.util.List;
+
 
 /**
 * @author 唐子怡
@@ -18,4 +24,11 @@ public interface TeamService extends IService<Team> {
      * @return
      */
     long addTeam(Team team , User loginUser);
+
+    /**
+     * 查询所有队伍列表
+     * @param teamQuery
+     * @return
+     */
+    List<TeamUserVO> listTeam(TeamQuery teamQuery);
 }
