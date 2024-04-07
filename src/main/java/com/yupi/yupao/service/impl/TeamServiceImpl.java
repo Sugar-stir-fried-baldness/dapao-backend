@@ -363,6 +363,39 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         return userTeamService.remove(userTeamQueryWrapper);
     }
 
+
+    /**
+     * 解散队伍
+     * @param teamId 传入的队伍id ， teamId
+     * @param loginUser 当前登录用户
+     * @return
+     */
+    @Override
+    public Boolean deleteTeam(long teamId, User loginUser) {
+
+        Team team = this.getById(teamId);
+        if(team == null ){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"队伍不存在");
+        }
+
+        //是队长，就可以解散队伍
+        Long userId = loginUser.getId();
+        if(team.getUserId().equals(userId)){
+            UserTeam userTeam = new UserTeam();
+            userTeam.setTeamId(teamId);
+            QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>(userTeam);
+            boolean remove = userTeamService.remove(userTeamQueryWrapper);
+            if(!remove ){
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR,"删除队伍关系失败");
+            }
+        }else {
+            throw new BusinessException(ErrorCode.NO_AUTH,"无权限解散队伍");
+        }
+        return this.removeById(teamId);
+    }
+
+
+
     /**
      * 获取队伍人数
      * @param teamId
@@ -373,6 +406,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         teamQueryWrapper.eq("teamId", teamId);
        return userTeamService.count(teamQueryWrapper);
     }
+
+
 }
 
 

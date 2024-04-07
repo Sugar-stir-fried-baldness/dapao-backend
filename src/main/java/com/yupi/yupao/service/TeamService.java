@@ -8,6 +8,7 @@ import com.yupi.yupao.model.request.TeamJoinRequest;
 import com.yupi.yupao.model.request.TeamQuitRequest;
 import com.yupi.yupao.model.request.TeamUpdateRequest;
 import com.yupi.yupao.model.vo.TeamUserVO;
+import org.apache.ibatis.annotations.Param;
 
 
 import java.util.List;
@@ -55,10 +56,18 @@ public interface TeamService extends IService<Team> {
     Boolean joinTeam(TeamJoinRequest teamJoinRequest ,User loginUser);
 
     /**
-     *
+     * 用户退出队伍
      * @param teamQuitRequest
      * @param loginUser
      * @return
      */
     Boolean quitTeam(TeamQuitRequest teamQuitRequest, User loginUser);
+
+    /**
+     * 删除队伍
+     * @param id
+     * @param loginUser
+     * @return
+     */
+    Boolean deleteTeam(@Param("id") long id, @Param("loginUser") User loginUser);
 }
