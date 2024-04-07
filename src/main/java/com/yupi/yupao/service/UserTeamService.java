@@ -2,6 +2,7 @@ package com.yupi.yupao.service;
 
 import com.yupi.yupao.model.domain.UserTeam;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.yupi.yupao.model.request.TeamJoinRequest;
 
 /**
 * @author 唐子怡
