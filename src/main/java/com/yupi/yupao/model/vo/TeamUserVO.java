@@ -1,14 +1,10 @@
 package com.yupi.yupao.model.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
+
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @Author:tzy
@@ -19,7 +15,7 @@ import java.util.List;
 public class TeamUserVO implements Serializable {
     private static final long serialVersionUID = 8791428956020294645L;
     /**
-     * id
+     * 队伍id
      */
     private Long id;
 
@@ -48,6 +44,7 @@ public class TeamUserVO implements Serializable {
      */
     private Long userId;
 
+
     /**
      * 0 - 公开，1 - 私有，2 - 加密
      */
@@ -70,6 +67,15 @@ public class TeamUserVO implements Serializable {
     /**
      * 创建人用户信息
      */
-     UserVO createUser;
+    private  UserVO createUser;
+
+    /**
+     * 已经加入队伍人数
+     */
+    private Integer hasJoinNum;
+    /**
+     * 是否已加入队伍
+     */
+    private boolean hasJoin = false;
 
 }

@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -23,6 +24,11 @@ public class RedisTest {
     @Resource
     private RedisTemplate<String , Object> redisTemplate;
 
+    @Test
+    void test2(){
+        HashOperations<String, Object, Object> hashOperations = redisTemplate.opsForHash();
+        ValueOperations<String, Object> stringObjectValueOperations = redisTemplate.opsForValue();
+    }
 
     @Test
     void test(){

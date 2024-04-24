@@ -34,7 +34,7 @@ class InsertUsersTest {
     public void doInsertSearch(){
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        final int INSERT_VALUE = 100000;
+        final int INSERT_VALUE = 1000000;
         ArrayList<User> userList = new ArrayList<>();
         for (int i = 0; i < INSERT_VALUE; i++) {
             User user = new User();
@@ -53,7 +53,7 @@ class InsertUsersTest {
             userList.add(user);
         }
         // 20s 10万条
-        userService.saveBatch(userList , 1000);
+        userService.saveBatch(userList , 10000);
         stopWatch.stop();
         System.out.println(stopWatch.getLastTaskTimeMillis());
     }

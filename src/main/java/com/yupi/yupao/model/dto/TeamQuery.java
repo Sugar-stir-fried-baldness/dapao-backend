@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Author:tzy
@@ -24,6 +25,10 @@ public class TeamQuery extends PageRequest {
      */
     private Long id;
 
+    /**
+     * 用户id 列表
+     */
+    private List<Long> idList;
     /**
      * 队伍名称
      */

@@ -7,6 +7,7 @@ import com.yupi.yupao.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -38,20 +39,21 @@ public class PreCacheJob {
      * 每天执行，预热加载用户
      * 使用并发锁 来控制只有一台服务器加载用户
      */
-    @Scheduled( cron = "0 1 13 * * ? ")
-    public void doCacheRecommendUser(){
+    @Scheduled( cron = "0 55 16 * * ? ")
+    public void doCacheRecommendUserByHash(){
         RLock lock = redissonClient.getLock("yupao:precachejob:docache:lock");
         try {
             if(lock.tryLock(0,-1 , TimeUnit.MILLISECONDS)){
                 for (Long userId : mainUserList) {
-                    ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-                    String redisKey = String.format("yupao:user:recommend:%s", userId);
+                    HashOperations<String, Object, Object> opsForHash = redisTemplate.opsForHash();
+                    String redisKey = "yupao:user:recommend";
                     //如果没缓存，从数据库中wu查询， 写入缓存里面
                     QueryWrapper<User> queryWrapper = new QueryWrapper<>();
                     //page 是mybatis里面的分页查询方法，需要传入 翻页对象，封装类   pageNum:页号
                     Page userPage = userService.page( new Page<>( 1 , 20)  , queryWrapper);
                     try {
-                        valueOperations.set(redisKey , userPage ,30000, TimeUnit.MILLISECONDS );
+                        opsForHash.put(redisKey , String.valueOf(userId) ,userPage  );
+                        redisTemplate.expire(redisKey,30000,TimeUnit.MILLISECONDS);
                     } catch (Exception e) {
                         log.error("redis set error",e);
                     }
@@ -63,6 +65,36 @@ public class PreCacheJob {
             lock.unlock();
         }
 
-
     }
+
+//    /**
+//     * 每天执行，预热加载用户
+//     * 使用并发锁 来控制只有一台服务器加载用户
+//     */
+//    @Scheduled( cron = "0 24 16 * * ? ")
+//    public void doCacheRecommendUserByString(){
+//        RLock lock = redissonClient.getLock("yupao:precachejob:docache:lock");
+//        try {
+//            if(lock.tryLock(0,-1 , TimeUnit.MILLISECONDS)){
+//                for (Long userId : mainUserList) {
+//                    ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+//                    String redisKey = String.format("yupao:user:recommend:%s", userId);
+//                    //如果没缓存，从数据库中wu查询， 写入缓存里面
+//                    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+//                    //page 是mybatis里面的分页查询方法，需要传入 翻页对象，封装类   pageNum:页号
+//                    Page userPage = userService.page( new Page<>( 1 , 20)  , queryWrapper);
+//                    try {
+//                        valueOperations.set(redisKey , userPage ,30000, TimeUnit.MILLISECONDS );
+//                    } catch (Exception e) {
+//                        log.error("redis set error",e);
+//                    }
+//                }
+//            }
+//        } catch (InterruptedException e) {
+//            log.error("redis lock error",e);
+//        }finally {
+//            lock.unlock();
+//        }
+//
+//    }
 }

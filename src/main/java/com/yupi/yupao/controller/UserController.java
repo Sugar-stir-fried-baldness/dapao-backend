@@ -214,6 +214,24 @@ public class UserController {
         return ResultUtils.success(result);
     }
 
+    /**
+     * 随机匹配
+     * @param num
+     * @param request
+     * @return
+     */
+    @GetMapping("/match")
+    public BaseResponse<List<User>> matchUsers(long num , HttpServletRequest request) {
+        if(num <= 0 || num > 20){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+
+        List<User> user =  userService.matchUser(num , loginUser);
+
+        return ResultUtils.success(user);
+    }
+
 
 
 

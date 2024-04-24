@@ -12,8 +12,11 @@ import com.yupi.yupao.exception.BusinessException;
 import com.yupi.yupao.mapper.UserMapper;
 import com.yupi.yupao.model.domain.User;
 import com.yupi.yupao.service.UserService;
+import com.yupi.yupao.util.AlgorithmUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+
+import org.apache.commons.math3.util.Pair;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
@@ -27,7 +30,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.yupi.yupao.contant.UserConstant.ADMIN_ROLE;
 import static com.yupi.yupao.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -229,7 +231,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             //set判空  ofNullable封装一个可能为空的对象 | 如果 tempTagName 为空的话，就取orElse里面的值
             tempTagName = Optional.ofNullable(tempTagName).orElse(new HashSet<>());
             for (String tagName : tagsNameList) {
-                 if (!tempTagName.contains(tagName)) {
+                if (!tempTagName.contains(tagName)) {
                     return false;
                 }
             }
@@ -243,17 +245,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     /**
      * 获取当前登录用户
+     *
      * @param request
      * @return
      */
     @Override
-    public User getLoginUser( HttpServletRequest request) {
-        if(request == null){
+    public User getLoginUser(HttpServletRequest request) {
+        if (request == null) {
             return null;
         }
         Object loginUser = request.getSession().getAttribute(USER_LOGIN_STATE);
 
-        if(loginUser == null){
+        if (loginUser == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
@@ -264,6 +267,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     /**
      * 更新用户
+     *
      * @param user
      * @param loginUser
      * @return
@@ -271,19 +275,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public int updateUser(User user, User loginUser) {
         //判断这个
-        if(user == null){
+        if (user == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
 
         //todo 补充校验，如果用户没有传任何要更新的值，就直接报错，不执行update语句
         Long id = user.getId();
 //        log.info("user.id 和 loginUser.id 的id分别是",id,loginUser.getId());
-        if(!isAdmin(loginUser) && id != loginUser.getId() ){
+        if (!isAdmin(loginUser) && id != loginUser.getId()) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
 
         User userResult = userMapper.selectById(id);
-        if(userResult == null){
+        if (userResult == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
 
@@ -294,6 +298,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     /**
      * 是否为管理员
+     *
      * @param request
      * @return
      */
@@ -317,7 +322,68 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return user != null && user.getUserRole() == UserConstant.ADMIN_ROLE;
     }
 
+    /**
+     * 匹配用户（推荐）
+     *
+     * @param num
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public List<User> matchUser(long num, User loginUser) {
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.last("limit 5000");
+        //过滤掉标签为空的用户 ; 只查需要的数据（比如 id 和 tags）
+        userQueryWrapper.isNotNull("tags");
+        userQueryWrapper.select("id", "tags");
+        List<User> userList = this.list(userQueryWrapper);
+        //得到用户的标签列表
+        String tags = loginUser.getTags();
+        Gson gson = new Gson();
+        List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
+        }.getType());
 
+        //下标相似度：key：表示用户列表下标(userList) ->> value:与当前用户相似度
+        // SortedMap<Integer , Long> indexSimilarityMap = new TreeMap<>();
+        List<Pair<User, Long>> list = new ArrayList<>();
+
+        //将登录用户的标签和 数据库里面的所有用户匹配
+        for (int i = 0; i < userList.size(); i++) {
+            User user = userList.get(i);
+            String userTags = user.getTags();
+            //无标签
+            if (StringUtils.isBlank(userTags) || Objects.equals(user.getId(), loginUser.getId())) {
+                continue;
+            }
+            List<String> userTagsList = gson.fromJson(userTags, new TypeToken<List<String>>() {
+            }.getType());
+            //计算分数
+            long distance = AlgorithmUtils.minDistance(tagList, userTagsList);
+            list.add(new Pair<>(user, distance));
+        }
+
+        // 先是根据求得的list ， 将它排序成 topPairUserList ， 取出它的id ， 根据 id查询完整信息（乱序） ， 重建一个list给它附上有序的值；返回
+        //按编辑距离从小到大排序 ， 距离从小->大 : 相似度 从大->小
+        List<Pair<User, Long>> topPairUserList = list.stream()
+                .sorted((a, b) -> (int) (a.getValue() - b.getValue()))
+                .limit(num)
+                .collect(Collectors.toList());
+        //找到对应的用户id集合
+        List<Long> userListVo = topPairUserList.stream().map(topList -> topList.getKey().getId()).collect(Collectors.toList());
+
+        //根据id查询user完整信息 (乱序的)
+        userQueryWrapper = new QueryWrapper<User>();
+        userQueryWrapper.in("id" , userListVo);
+        Map<Long, List<User>> userIdListMap = this.list(userQueryWrapper).stream().map(this::getSafetyUser).collect(Collectors.groupingBy(user -> user.getId()));
+
+        //
+        ArrayList<User> finalUserList = new ArrayList<>();
+        for (long userId : userListVo){
+            finalUserList.add(userIdListMap.get(userId).get(0));
+        }
+        //我希望返回的是一个脱敏过的用户
+        return finalUserList;
+    }
 
     /**
      * 根据标签名查询 用户 (SQL查询版本)
